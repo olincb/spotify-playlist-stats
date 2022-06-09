@@ -4,10 +4,12 @@ from random import choice
 
 class Playlistats:
 
+
     def __init__(self) -> None:
         self.auth_manager = SpotifyClientCredentials()
         self.sp_api = spotipy.Spotify(auth_manager=self.auth_manager)
-    
+
+
     def example_playlist_id(self, category_id='featured'):
         if category_id == 'featured':
             pls = self.sp_api.featured_playlists(limit=50)['playlists']['items']
@@ -15,16 +17,19 @@ class Playlistats:
             pls = self.sp_api.category_playlists(category_id, limit=50)['playlists']['items']
         ex_pl = choice(pls)
         return ex_pl['id']
-    
+
+
     def playlist_id_search(self, query):
         '''
         feeling lucky?
         returns the id of the first playlist returned by a search
         '''
         return self.sp_api.search(query, limit=1, type='playlist')['playlists']['items'][0]['id']
-    
+
+
     def basic_info(self, id, fields=None, market=None, additional_types=('track', )):
         return self.sp_api.playlist(id, fields=fields, market=market, additional_types=additional_types)
+
 
     def all_tracks(self, id):
         resp = self.sp_api.playlist_items(id)
@@ -34,8 +39,10 @@ class Playlistats:
             tracks += resp['items']
         return tracks
 
+
     def track_count(self, id):
         return len(self.all_tracks(id))
+
 
 if __name__ == "__main__":
     import pprint
