@@ -11,8 +11,8 @@ import math
 class Playlistats:
 
 
-    _TRANSFORM_EXPONENT_BASE = 1.4
-    _AMPLIFY_MULTIPLIER = 20
+    _TRANSFORM_EXPONENT_BASE = 1.43
+    _AMPLIFY_MULTIPLIER = 22
     _AMPLIFY_SHIFT = 0.5
 
 
@@ -150,6 +150,18 @@ class Playlistats:
         return Counter({k:v for k, v in all_genres.most_common()})
 
     
+    def most_common_genres(self, id: str = None, n: int = 10, tracks: list = None) -> list:
+        genre_counts = self.genre_counts(id, tracks)
+        return [k for k, _ in genre_counts.most_common(n)]
+
+
+    def most_common_genres_with_ratios(self, id: str = None, n: int = 10, tracks: list = None) -> dict:
+        tracks = self._tracks_from_id_or_tracks(id, tracks)
+        genre_counts = self.genre_counts(tracks=tracks)
+        num_tracks = self.track_count(tracks=tracks)
+        return {k: v/num_tracks for k, v in genre_counts.most_common(n)}
+
+    
     def _genre_cts_from_id_tracks_or_genre_cts(self, id, tracks, genre_cts):
         if id == None and tracks == None and genre_cts == None:
             raise ValueError("Need one of id, tracks, or genre_cts.")
@@ -221,6 +233,18 @@ class Playlistats:
 
     def _amplify(self, x):
         return 1/(1+math.exp(-self._AMPLIFY_MULTIPLIER * (x - self._AMPLIFY_SHIFT)))
+
+    
+    def _calibrate_scoring_constants(self, acoustic_dist_wavg: float, transform_exp_base: float, amp_mult: float, amp_shift: float = 0.5):
+        def calibration_transform_posR_to_zero_to_one(adwa):
+            return 1/(transform_exp_base**adwa)
+
+        def calibration_amplify(x):
+            return 1/(1+math.exp(-amp_mult * (x - amp_shift)))
+        
+        score = calibration_transform_posR_to_zero_to_one(acoustic_dist_wavg)
+        amplified_score = calibration_amplify(score)
+        return amplified_score
 
 
     def genre_track_ratio(self, id: str = None, tracks: list = None) -> float:
